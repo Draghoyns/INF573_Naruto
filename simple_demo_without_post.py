@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import csv
 import time
 import copy
@@ -6,7 +9,7 @@ import numpy as np
 
 import cv2 as cv
 
-# from model.yolox.yolox_onnx_without_post import YoloxONNX
+from model.yolox.yolox_onnx_without_post import YoloxONNX
 import resnet_use as resnet
 from utils import CvDrawText
 
@@ -83,8 +86,13 @@ def main():
     )
 
     # モデルロード #############################################################
-    # yolox = YoloxONNX(model_path=model_path,input_shape=input_shape,class_score_th=score_th,with_p6=with_p6,)
-    model = resnet.load_model("resnet18_naruto_local.pth")
+    yolox = YoloxONNX(
+        model_path=model_path,
+        input_shape=input_shape,
+        class_score_th=score_th,
+        with_p6=with_p6,
+    )
+    model = resnet.load_model("resnet18_naruto.pth")
 
     # ラベル読み込み ###########################################################
     with open("setting/labels.csv", encoding="utf8") as f:
@@ -103,76 +111,69 @@ def main():
         frame_count += 1
         if (frame_count % (skip_frame + 1)) != 0:
             continue
+
         frame_height, frame_width = frame.shape[:2]
 
         # 検出実施 #############################################################
+        bboxes, scores, class_ids = yolox.inference(frame)
+        # class_ids, scores = resnet.predict_image(frame, model)
 
-        # lets not use bounding boxes
-        # bboxes, scores, class_ids = yolox.inference(frame)
+        for bbox, score, class_id in zip(bboxes, scores, class_ids):
+            class_id = int(class_id) + 1
+            score = score[0]
+            if score < score_th:
+                continue
+            # cv.putText(
+            #     debug_image,
+            #     "No hand sign detected",
+            #     (10, 30),
+            #     cv.FONT_HERSHEY_SIMPLEX,
+            #     0.8,
+            #     (255, 255, 255),
+            #     2,
+            #     cv.LINE_AA,
+            # )
+            else:
+                cv.putText(
+                    debug_image,
+                    f"ID:{str(class_id)} {labels[class_id][0]} {score:.3f}",
+                    (10, 30),
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (255, 255, 255),
+                    2,
+                    cv.LINE_AA,
+                )
+                # 検出結果可視化 ###################################################
+            # x1, y1 = int(bbox[0]), int(bbox[1])
+            # x2, y2 = int(bbox[2]), int(bbox[3])
+            # score = float(score)
+            #        cv.putText(
+            #    debug_image,
+            #    f"ID:{str(class_id)} {labels[class_id][0]} {score:.3f}",
+            #    (x1, y1 - 15),
+            #    cv.FONT_HERSHEY_SIMPLEX,
+            #    0.6,
+            #    (0, 255, 0),
+            #    2,
+            #    cv.LINE_AA,
+            # )
+            # cv.rectangle(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-        class_id, score = resnet.predict_image(frame, model)
-        class_id = int(class_id) + 1
-        score = float(score)
-
-        if score > 0.5:
-            header_image = np.zeros((int(frame_height / 18), frame_width, 3), np.uint8)
-            cv.putText(
-                debug_image,
-                f"ID:{str(class_id)} {labels[class_id][0]} {score:.3f}",
-                (10, 30),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                (255, 255, 255),
-                2,
-                cv.LINE_AA,
-            )
-        else:
-            cv.putText(
-                debug_image,
-                "No hand sign detected",
-                (10, 30),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                (255, 255, 255),
-                2,
-                cv.LINE_AA,
-            )
-        # for bbox, score, class_id in zip(bboxes, scores, class_ids):
-        #    class_id = int(class_id) + 1
-        #    # if score < score_th:
-        #    #    continue
-        #
-        #    # 検出結果可視化 ###################################################
-        #    x1, y1 = int(bbox[0]), int(bbox[1])
-        #    x2, y2 = int(bbox[2]), int(bbox[3])
-        #    score = float(score)
-        #
-        #    cv.putText(
-        #        debug_image,
-        #        f"ID:{str(class_id)} {labels[class_id][0]} {score:.3f}",
-        #        (x1, y1 - 15),
-        #        cv.FONT_HERSHEY_SIMPLEX,
-        #        0.6,
-        #        (0, 255, 0),
-        #        2,
-        #        cv.LINE_AA,
-        #    )
-        #    cv.rectangle(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        #
         # FPS調整 #############################################################
         elapsed_time = time.time() - start_time
         sleep_time = max(0, ((1.0 / fps) - elapsed_time))
         time.sleep(sleep_time)
 
         # cv.putText(
-        #    debug_image,
-        #    "Elapsed Time:" + "{:.1f}".format(elapsed_time * 1000) + "ms",
-        #    (10, 30),
-        #    cv.FONT_HERSHEY_SIMPLEX,
-        #    0.8,
-        #    (0, 255, 0),
-        #    2,
-        #    cv.LINE_AA,
+        #     debug_image,
+        #     "Elapsed Time:" + "{:.1f}".format(elapsed_time * 1000) + "ms",
+        #     (10, 30),
+        #     cv.FONT_HERSHEY_SIMPLEX,
+        #     0.8,
+        #     (0, 255, 0),
+        #     2,
+        #     cv.LINE_AA,
         # )
 
         # 画面反映 #############################################################
