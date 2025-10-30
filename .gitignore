@@ -137,3 +137,9 @@ dmypy.json
 # tensorrt
 *.engine
 *.profile
+
+# macOS
+.DS_Store
+
+# vscode
+.vscode/
