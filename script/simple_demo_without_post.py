@@ -10,7 +10,7 @@ import numpy as np
 import cv2 as cv
 
 from model.yolox.yolox_onnx_without_post import YoloxONNX
-import resnet_use as resnet
+import resnet_version.resnet_use as resnet
 from utils import CvDrawText
 
 

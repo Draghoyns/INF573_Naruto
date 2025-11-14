@@ -20,7 +20,7 @@ def load_model(path):
 
 # Function to predict the class of the image
 
-classes = os.listdir("dataset/Pure Naruto Hand Sign Data/train")
+classes = os.listdir("data/train")
 
 transform_dataset = transforms.Compose(
     [

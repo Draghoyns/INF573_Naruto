@@ -6,7 +6,7 @@ import numpy as np
 
 import cv2 as cv
 
-import resnet_use as resnet
+import resnet_version.resnet_use as resnet
 from utils import CvDrawText
 
 
@@ -50,7 +50,7 @@ def get_args():
 
 
 def main():
-    # 引数解析 #################################################################
+
     args = get_args()
     cap_device = args.device
     cap_width = args.width
@@ -66,9 +66,11 @@ def main():
     if args.file is not None:
         cap_device = args.file
 
+    model = resnet.load_model("resnet18_naruto_local.pth")
+
     frame_count = 0
 
-    # カメラ準備 ###############################################################
+    # Camera
     cap = cv.VideoCapture(cap_device)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
@@ -81,16 +83,13 @@ def main():
         frameSize=(cap_width, cap_height),
     )
 
-    # モデルロード #############################################################
-    model = resnet.load_model("resnet18_naruto_local.pth")
-
-    # ラベル読み込み ###########################################################
+    # Read label
     with open("setting/labels.csv", encoding="utf8") as f:
         labels = csv.reader(f)
         labels = [row for row in labels]
 
     while True:
-        # カメラキャプチャ #####################################################
+        # get frame
         ret, frame = cap.read()
         if not ret:
             continue
@@ -101,7 +100,7 @@ def main():
             continue
         frame_height, frame_width = frame.shape[:2]
 
-        # 検出実施 #############################################################
+        # sign recognition
 
         class_id, score = resnet.predict_image(frame, model)
         class_id = int(class_id) + 1
@@ -130,11 +129,11 @@ def main():
                 cv.LINE_AA,
             )
 
-        # 画面反映 #############################################################
+        # display
         cv.imshow("NARUTO HandSignDetection Simple Demo", debug_image)
         video_writer.write(debug_image)
 
-        # キー処理(ESC：終了) #################################################
+        # ESC for exiting
         key = cv.waitKey(1) if args.file is None else cv.waitKey(0)
         if key == 27:  # ESC
             break
