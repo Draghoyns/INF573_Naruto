@@ -1,3 +1,9 @@
+## Data
+The dataset comes from the Naruto [Hand Sign Dataset](https://www.kaggle.com/datasets/vikranthkanumuru/naruto-hand-sign-dataset/data) on Kaggle.
+I cleaned and augmented the data for more diversity.
+
+
+## Usage
 For using the program, it's very simple.
 
 The demo using the ResNet is in _demo.py_, which you simply have to run to test.
