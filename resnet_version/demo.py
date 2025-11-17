@@ -4,14 +4,19 @@ import argparse
 
 import cv2 as cv
 
-import resnet_version.resnet_use as resnet
+from . import resnet_use as resnet
 
 
 def get_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--device", type=int, default=0)
-    parser.add_argument("--file", type=str, default=None)
+    parser.add_argument(
+        "--device",
+        type=int,
+        default=0,
+        help="Device for stream capture. Default is O -> uses default camera",
+    )
+    parser.add_argument("--file", type=str, default=None, help="Video file to read")
     parser.add_argument("--fps", type=int, default=30)
     parser.add_argument("--width", help="cap width", type=int, default=960)
     parser.add_argument("--height", help="cap height", type=int, default=540)
@@ -19,7 +24,7 @@ def get_args():
     parser.add_argument("--skip_frame", type=int, default=0)
 
     parser.add_argument(
-        "--model",
+        "--model_path",
         type=str,
         default="model/yolox/yolox_nano_with_post.onnx",
     )
@@ -32,7 +37,7 @@ def get_args():
     parser.add_argument(
         "--score_th",
         type=float,
-        default=0.7,
+        default=0.6,
         help="Class confidence",
     )
     parser.add_argument(
@@ -49,21 +54,25 @@ def get_args():
 def main():
 
     args = get_args()
-    cap_device = args.device
+    cap_device = args.device  # device to capture video stream
     cap_width = args.width
     cap_height = args.height
     fps = args.fps
     skip_frame = args.skip_frame
 
-    model_path = args.model
+    model_path = args.model_path
     input_shape = tuple(map(int, args.input_shape.split(",")))
     score_th = args.score_th
     with_p6 = args.with_p6
 
     if args.file is not None:
-        cap_device = args.file
+        cap_device = args.file  # if vdeo file specified
 
-    model = resnet.load_model("resnet18_naruto_local.pth")
+    if "resnet" in model_path:
+        model = resnet.load_model(model_path)
+    else:
+        print("Model not supported. Defaulting to ResNet")
+        model = resnet.load_model("resnet_version/resnet18_naruto_local.pth")
 
     frame_count = 0
 
@@ -72,7 +81,8 @@ def main():
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
     cap_fps = cap.get(cv.CAP_PROP_FPS)
-    fourcc = cv.VideoWriter_fourcc("m", "p", "4", "v")
+    print(cap_fps)
+    fourcc = cv.VideoWriter.fourcc("m", "p", "4", "v")
     video_writer = cv.VideoWriter(
         filename="output.mp4",
         fourcc=fourcc,

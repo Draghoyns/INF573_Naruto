@@ -75,7 +75,7 @@ def main():
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
     cap_fps = cap.get(cv.CAP_PROP_FPS)
-    fourcc = cv.VideoWriter_fourcc("m", "p", "4", "v")
+    fourcc = cv.VideoWriter.fourcc("m", "p", "4", "v")
     video_writer = cv.VideoWriter(
         filename="output.mp4",
         fourcc=fourcc,
@@ -190,5 +190,5 @@ def main():
     cv.destroyAllWindows()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#    main()
