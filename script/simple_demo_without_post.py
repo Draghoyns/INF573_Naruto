@@ -5,13 +5,11 @@ import csv
 import time
 import copy
 import argparse
-import numpy as np
 
 import cv2 as cv
 
 from model.yolox.yolox_onnx_without_post import YoloxONNX
 import resnet_version.resnet_use as resnet
-from utils import CvDrawText
 
 
 def get_args():
@@ -54,7 +52,7 @@ def get_args():
 
 
 def main():
-    # 引数解析 #################################################################
+    # Extraction #################################################################
     args = get_args()
     cap_device = args.device
     cap_width = args.width
@@ -72,7 +70,7 @@ def main():
 
     frame_count = 0
 
-    # カメラ準備 ###############################################################
+    # Camera ###############################################################
     cap = cv.VideoCapture(cap_device)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
@@ -85,7 +83,7 @@ def main():
         frameSize=(cap_width, cap_height),
     )
 
-    # モデルロード #############################################################
+    # Model #############################################################
     yolox = YoloxONNX(
         model_path=model_path,
         input_shape=input_shape,
@@ -94,7 +92,7 @@ def main():
     )
     model = resnet.load_model("resnet18_naruto.pth")
 
-    # ラベル読み込み ###########################################################
+    # Labels ###########################################################
     with open("setting/labels.csv", encoding="utf8") as f:
         labels = csv.reader(f)
         labels = [row for row in labels]
@@ -102,7 +100,7 @@ def main():
     while True:
         start_time = time.time()
 
-        # カメラキャプチャ #####################################################
+        # Read frame #####################################################
         ret, frame = cap.read()
         if not ret:
             continue
@@ -114,7 +112,7 @@ def main():
 
         frame_height, frame_width = frame.shape[:2]
 
-        # 検出実施 #############################################################
+        # Detection #############################################################
         bboxes, scores, class_ids = yolox.inference(frame)
         # class_ids, scores = resnet.predict_image(frame, model)
 
@@ -144,7 +142,7 @@ def main():
                     2,
                     cv.LINE_AA,
                 )
-                # 検出結果可視化 ###################################################
+                # Display result ###################################################
             # x1, y1 = int(bbox[0]), int(bbox[1])
             # x2, y2 = int(bbox[2]), int(bbox[3])
             # score = float(score)
@@ -160,7 +158,7 @@ def main():
             # )
             # cv.rectangle(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-        # FPS調整 #############################################################
+        # Adjust FPS #############################################################
         elapsed_time = time.time() - start_time
         sleep_time = max(0, ((1.0 / fps) - elapsed_time))
         time.sleep(sleep_time)
@@ -176,11 +174,11 @@ def main():
         #     cv.LINE_AA,
         # )
 
-        # 画面反映 #############################################################
+        # Display #############################################################
         cv.imshow("NARUTO HandSignDetection Simple Demo", debug_image)
         video_writer.write(debug_image)
 
-        # キー処理(ESC：終了) #################################################
+        # (ESC：exit) #################################################
         key = cv.waitKey(1) if args.file is None else cv.waitKey(0)
         if key == 27:  # ESC
             break

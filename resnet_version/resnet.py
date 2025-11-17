@@ -1,22 +1,10 @@
-import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot as plt
-
 import numpy as np
 
 from sklearn.model_selection import *
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import *
 
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
-
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense, Dropout, Flatten, InputLayer
-from tensorflow.keras.layers import Conv2D, MaxPooling2D
 
 import cv2
 import os
@@ -27,21 +15,20 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 
-from PIL import Image
+
+data_path = "data/"
 
 
-def lire_images(img_dir, xdim, ydim, nmax=5000):
+def read_images(img_dir, xdim, ydim, nmax=5000):
     """
-    Lit les images dans les sous répertoires de img_dir
-    nmax images lues dans chaque répertoire au maximum
-    Renvoie :
-    X : liste des images lues, matrices xdim*ydim
-    y : liste des labels numériques
-    label : nombre de labels
-    label_names : liste des noms des répertoires lus
+    Read images in subdirectories of img_dir, with maximum nmax images per subdirectory.
+    Return :
+    X : list of loaded images, matrices xdim x ydim
+    y : list of numeric labels
+    label : number of labels
+    label_names : names of scanned directories (= label names)
     """
     label = 0
     label_names = []
@@ -56,25 +43,21 @@ def lire_images(img_dir, xdim, ydim, nmax=5000):
         for f1 in files:
             if n > nmax:
                 break
-            img = cv2.imread(f1)  # Lecture de l'image dans le repertoire
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Conversion couleur RGB
-            img = cv2.resize(img, (xdim, ydim))  # Redimensionnement de l'image
-            X.append(
-                np.array(img)
-            )  # Conversion en tableau et ajout a la liste des images
-            y.append(label)  # Ajout de l'etiquette de l'image a la liste des etiquettes
+            img = cv2.imread(f1)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.resize(img, (xdim, ydim))
+            X.append(np.array(img))
+            y.append(label)
             n = n + 1
         print(n, " images lues")
         label = label + 1
     X = np.array(X)
     y = np.array(y)
-    gc.collect()  # Récupération de mémoire
+    gc.collect()  # free memory
     return X, y, label, label_names
 
 
-X, y, num_classes, labels = lire_images(
-    "dataset/Pure Naruto Hand Sign Data/train", 224, 224, 1000
-)
+X, y, num_classes, labels = read_images(data_path + "train", 224, 224, 1000)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
@@ -150,10 +133,10 @@ transform_dataset = transforms.Compose(
 
 
 train_dataset = torchvision.datasets.ImageFolder(
-    root="dataset/Pure Naruto Hand Sign Data/train", transform=transform_dataset
+    root=data_path + "train", transform=transform_dataset
 )
 val_dataset = torchvision.datasets.ImageFolder(
-    root="dataset/Pure Naruto Hand Sign Data/test", transform=transform_dataset
+    root=data_path + "test", transform=transform_dataset
 )
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
